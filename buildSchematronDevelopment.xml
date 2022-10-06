@@ -1,0 +1,760 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright (c) 1995-2022 held by the author(s).  All rights reserved.
+                          
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer
+      in the documentation and/or other materials provided with the
+      distribution.
+    * Neither the names of the Naval Postgraduate School (NPS)
+      Modeling Virtual Environments and Simulation (MOVES) Institute
+      (http://www.nps.edu and http://www.MovesInstitute.org)
+      nor the names of its contributors may be used to endorse or
+      promote products derived from this software without specific
+      prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<!--
+    Document   : buildSchematronDevelopment.xml
+    Created on : 19 October 2008
+    Author     : Don Brutzman
+    Description: build configuration for X3D schematron validation testing
+-->
+
+<!-- TODO file upload -->
+
+<project name="X3D tools: schematron development" default="all" basedir=".">
+    <description>Development tasks supporting quality assurance rules for X3D correctness, completeness and coherency using XML Schematron</description>
+
+    <!-- configuration properties:  server names, user names and passwords ====================== -->
+
+    <property name="access.properties.filename"  value="../../content/examples/access.properties"/>
+    <property file="${access.properties.filename}"/>
+
+    <!-- ======================================================================================== -->
+
+    <property environment="env"/>
+
+    <!-- ANT Contrib archive at http://sourceforge.net/project/showfiles.php?group_id=36177        -->
+    <!-- must have ant-contrib.jar in ANT_HOME/lib (or else specify path)                          -->
+    <!-- note Netbeans default path is something like C:\Program Files\NetBeans 8.0.2\extide\ant   -->
+    <!-- and will have to be overridden by going to Tools > Options > Miscellaneous > Ant          -->
+    <!-- and then pointing to C:\apache-ant-1.9.4 (or somesuch directory)                          -->
+    <taskdef resource="net/sf/antcontrib/antlib.xml"/>
+
+    <!-- Ant Subversion Task at http://sourceforge.net/projects/antsvntask                         -->
+    <!-- must have antsvntask.jar in ANT_HOME/lib (or else specify path)                           -->
+    <!-- note that Netbeans default path is something like C:\Program Files\NetBeans 6.1\java2\ant -->
+    <!-- and will have to be overridden by going to Tools > Options > Miscellaneous > Ant          -->
+    <!-- and then pointing to C:\auv\AuvWorkbench\lib\apache-ant-1.9.2 (or somesuch directory)
+    <taskdef name="subversion"
+             classname="net.tralfamadore.ast.tasks.SubversionTask"
+             classpath="${ANT_HOME}/antsvntask-0.1.25/antsvntask.jar"/>    -->
+    
+    <property name="jing.dir"  location="bin"/>
+    <!-- http://www.thaiopensource.com/relaxng/jing.html -->
+    <!-- http://www.thaiopensource.com/relaxng/jing-ant.html -->
+    <taskdef name="jing" classname="com.thaiopensource.relaxng.util.JingTask" classpath="${jing.dir}/jing.jar"/>
+
+    <property name="schematron.dir" location="."/>
+    <!-- updated version
+    <property name="schematron.dir" location="iso-schematron-xslt2"/> -->    
+
+    <!-- https://stackoverflow.com/questions/919692/how-to-execute-xslt-2-0-with-ant -->
+    <!-- https://sourceforge.net/projects/saxon/files/Saxon-HE jar download handled in X3DJSAIL build -->
+    <!-- https://sourceforge.net/projects/saxon/files/Saxon-HE/11/Java/ -->
+    <!-- https://www.saxonica.com/documentation10/#!about/gettingstarted/gettingstartedjava -->
+    <!-- SaxonHE 11 (java.lang.NoClassDefFoundError: org/xmlresolver/Resolver) https://saxonica.plan.io/boards/3/topics/8478?r=8480 -->
+    <property name="saxon.dir"        location="../../tools/jar" description="relative path from stylesheets directory"/>
+    <property name="saxon.jar"           value="saxon-he-11.3.jar"/><!-- previously saxon-he-10.6.jar saxon9he.jar -->
+    <property name="xmlresolver.jar"     value="xmlresolver-4.2.0.jar"/><!-- required with saxon-he-11+.jar -->
+    
+    <property name="examples.dir"     location="../../content/examples"/>
+    <property name="stylesheets.dir"  location="../../stylesheets"/>
+    <property name="c14n.dir"            value="../../tools/canonical/dist/lib"/>
+    <property name="c14n.jar"            value="X3dC14n.jar"/>
+
+    <!-- subversion checkout address to download latest x3d configuration files (https prefix works); note new sourceforge address April 2013 -->
+    <property name="x3d.sourceforge.site" value="https://svn.code.sf.net/p/x3d/code/www.web3d.org"/>
+
+    <xmlcatalog id="SchematronCatalog">
+        <dtd    publicId="http://www.ascc.net/xml/schematron"                           location="schematron1-5.dtd"/>
+        <dtd    publicId="http://www.ascc.net/xml/schematron/schematron1-5.dtd"         location="schematron1-5.dtd"/>
+        <entity publicId="http://www.ascc.net/xml/schematron/schematron1-5.xsd"         location="schematron1-5.xsd"/>
+    </xmlcatalog>
+    <!-- local copies put in local subdirectory by get-validation-schemas-DTDs task -->
+    <xmlcatalog id="X3dCatalog">
+        <dtd    publicId="ISO//Web3D//DTD X3D 3.0//EN"                                  location="specifications/x3d-3.0.dtd"/>
+        <dtd    publicId="ISO//Web3D//DTD X3D 3.1//EN"                                  location="specifications/x3d-3.1.dtd"/>
+        <dtd    publicId="ISO//Web3D//DTD X3D 3.2//EN"                                  location="specifications/x3d-3.2.dtd"/>
+        <dtd    publicId="ISO//Web3D//DTD X3D 3.3//EN"                                  location="specifications/x3d-3.3.dtd"/>
+        <dtd    publicId="ISO//Web3D//DTD X3D 4.0//EN"                                  location="specifications/x3d-4.0.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-3.0.dtd"             location="specifications/x3d-3.0.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-3.1.dtd"             location="specifications/x3d-3.1.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-3.2.dtd"             location="specifications/x3d-3.2.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-3.3.dtd"             location="specifications/x3d-3.3.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-4.0.dtd"             location="specifications/x3d-4.0.dtd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-3.0.xsd"             location="specifications/x3d-3.0.xsd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-3.1.xsd"             location="specifications/x3d-3.1.xsd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-3.2.xsd"             location="specifications/x3d-3.2.xsd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-3.3.xsd"             location="specifications/x3d-3.3.xsd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-4.0.xsd"             location="specifications/x3d-4.0.xsd"/>
+    </xmlcatalog>
+
+    <!-- local copies put in local subdirectory by X3D-Edit SchematronValidationAction createTempDirectory() -->
+    <xmlcatalog id="X3dCatalogLocalX3D-Edit">
+        <dtd    publicId="ISO//Web3D//DTD X3D 3.0//EN"                                  location="x3d-3.0.dtd"/>
+        <dtd    publicId="ISO//Web3D//DTD X3D 3.1//EN"                                  location="x3d-3.1.dtd"/>
+        <dtd    publicId="ISO//Web3D//DTD X3D 3.2//EN"                                  location="x3d-3.2.dtd"/>
+        <dtd    publicId="ISO//Web3D//DTD X3D 3.3//EN"                                  location="x3d-3.3.dtd"/>
+        <dtd    publicId="ISO//Web3D//DTD X3D 4.0//EN"                                  location="x3d-4.0.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-3.0.dtd"             location="x3d-3.0.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-3.1.dtd"             location="x3d-3.1.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-3.2.dtd"             location="x3d-3.2.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-3.3.dtd"             location="x3d-3.3.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-4.0.dtd"             location="x3d-4.0.dtd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-3.0.xsd"             location="x3d-3.0.xsd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-3.1.xsd"             location="x3d-3.1.xsd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-3.2.xsd"             location="x3d-3.2.xsd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-3.3.xsd"             location="x3d-3.3.xsd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-4.0.xsd"             location="x3d-4.0.xsd"/>
+    </xmlcatalog>
+
+    <!-- target tasks ===================================================================== -->
+
+    <target name="all" depends="build,upload" description="perform all target tasks">
+    </target>
+
+    <target name="build" depends="get-all,prepare-X3dSchematron-stylesheet,test">
+      <!-- TODO add other tests once running under saxon -->
+      <!-- typically avoid cleaning since that confuses subversion -->
+    </target>
+
+    <target name="hudson" depends="build">
+        <!-- https://savage.nps.edu/hudson/job/X3dSchematron -->
+    </target>
+
+    <target name="clean" description="remove autogenerated intermediate rules, stylesheets and compiled stylesheets">
+        <delete verbose="true">
+            <fileset dir=".">
+                <include name="X3dSchematronValidityChecks1.sch"/>
+                <include name="X3dSchematronValidityChecks2.sch"/>
+                <include name="X3dSchematronValidityChecks.xslt"/>
+            </fileset>
+        </delete>
+    </target>
+
+    <target name="test" depends="test.HelloWorld.saxon,TestSchematronDiagnostics.validate,TestSchematronDiagnostics.rules.saxon" description="run all test cases">
+        <!-- problematic dependencies due to ant xslt task failing: test.HelloWorld.xslt,test.newScene -->
+        <echo message="all tests complete"/>
+    </target>
+
+    <target name="test.HelloWorld.saxon" depends="prepare-X3dSchematron-stylesheet" description="test case">
+        <!-- http://www.saxonica.com/documentation/using-xsl/commandline.html                           -->
+        <!-- java net.sf.saxon.Transform -s:source -o:output [-xsl:stylesheet or -c:compiledStylesheet] -->
+        <!-- $(SAXON) -t -s:HelloWorld.x3d -o:HelloWorld.html -xsl:../X3dToXhtml.xslt -->
+        <!-- note reordering of parameters for source, output contrary to Saxon documentation! -->
+        <echo message="HelloWorld.x3d conversion, saxon style:"/>
+        <java classname="net.sf.saxon.Transform" classpath="${saxon.dir}/${saxon.jar};." fork="${fork}">
+            <arg value="-warnings:recover"/> <!-- recover after writing a warning message -->
+            <!-- <arg value="-t"/> saxon version and timing information -->
+            <!--arg value="-xsltversion:2.0"/ not supported in SaxonHE? -->
+            <!-- https://stackoverflow.com/questions/45595852/xtde0160-xslt-1-0-compatibility-mode-is-not-available-in-this-configuration-in -->
+            <arg value="-s:HelloWorld.x3d"/>
+            <arg value="-o:_schematron/HelloWorld.x3d.svrl"/>
+            <arg value="X3dSchematronValidityChecks.xslt"/><!-- regular stylesheet -->
+        </java>
+        <echo message="HelloWorld.x3d.svrl result:"/>
+        <echo message="- - - - - - - - - - - -"/>
+        <concat>
+            <filelist dir="_schematron/" files="HelloWorld.x3d.svrl"/>
+        </concat>
+        <echo message="- - - - - - - - - - - -"/>
+        <echo message="HelloWorld.x3d conversion, new style:"/>
+        <java classname="net.sf.saxon.Transform" classpath="${saxon.dir}/${saxon.jar};." fork="false">
+            <arg value="-warnings:recover"/>
+            <!-- <arg value="-t"/> saxon version and timing information -->
+            <!--arg value="-xsltversion:2.0"/ not supported in SaxonHE? -->
+            <!-- https://stackoverflow.com/questions/45595852/xtde0160-xslt-1-0-compatibility-mode-is-not-available-in-this-configuration-in -->
+            <arg value="-o:_schematron/HelloWorld.x3d.svrl"/>
+            <arg value="HelloWorld.x3d"/>
+            <arg value="X3dSchematronValidityChecks.xslt"/>
+        </java>
+        <echo message="HelloWorld.x3d.svrl result:"/>
+        <echo message="- - - - - - - - - - - -"/>
+        <concat>
+            <filelist dir="_schematron/" files="HelloWorld.x3d.svrl"/>
+        </concat>
+        <echo message="- - - - - - - - - - - -"/>
+        <java classname="net.sf.saxon.Transform" classpath="${saxon.dir}/${saxon.jar};." fork="${fork}">
+            <arg value="-warnings:recover"/> <!-- recover after writing a warning message -->
+            <!-- <arg value="-t"/> saxon version and timing information -->
+            <!--arg value="-xsltversion:2.0"/ not supported in SaxonHE? -->
+            <!-- https://stackoverflow.com/questions/45595852/xtde0160-xslt-1-0-compatibility-mode-is-not-available-in-this-configuration-in -->
+            <arg value="-s:_schematron/HelloWorld.x3d.svrl"/>
+            <arg value="-o:_schematron/HelloWorld.x3d.svrl.txt"/>
+            <arg value="-xsl:SvrlReportText.xslt"/> <!--  regular stylesheet -->
+        </java>
+        <echo message="HelloWorld.x3d.txt result:"/>
+        <echo message="- - - - - - - - - - - -"/>
+        <concat>
+            <filelist dir="_schematron/" files="HelloWorld.x3d.svrl.txt"/>
+        </concat>
+        <echo message="- - - - - - - - - - - -"/>
+    </target>
+
+    <target name="test.HelloWorld.xslt" depends="prepare-X3dSchematron-stylesheet" description="test case">
+        <xslt basedir="." destdir="." extension=""
+           style="X3dSchematronValidityChecks.xslt"
+              in="HelloWorld.x3d"
+             out="_schematron/HelloWorld.x3d.svrl"/>
+        <xslt basedir="." destdir="." extension=""
+           style="SvrlReportText.xslt"
+              in="_schematron/HelloWorld.x3d.svrl"
+             out="_schematron/HelloWorld.x3d.svrl.txt"/>
+        <echo message="HelloWorld.svrl.txt result:"/>
+        <echo message="- - - - - - - - - - - -"/>
+        <concat>
+            <filelist dir="_schematron/" files="HelloWorld.x3d.svrl.txt"/>
+        </concat>
+        <echo message="- - - - - - - - - - - -"/>
+    </target>
+
+    <target name="test.HAnim1SpecificationLOA3Illustrated" depends="prepare-X3dSchematron-stylesheet" description="test case">
+        <xslt basedir="." destdir="." extension=""
+           style="X3dSchematronValidityChecks.xslt"
+              in="HAnim1SpecificationLOA3Illustrated.x3d"
+             out="_schematron/HAnim1SpecificationLOA3Illustrated.x3d.svrl"/>
+        <xslt basedir="." destdir="." extension=""
+           style="SvrlReportText.xslt"
+              in="_schematron/HAnim1SpecificationLOA3Illustrated.x3d.svrl"
+             out="_schematron/HAnim1SpecificationLOA3Illustrated.x3d.svrl.txt"/>
+        <echo message="HAnim1SpecificationLOA3Illustrated.svrl.txt result:"/>
+        <echo message="- - - - - - - - - - - -"/>
+        <concat>
+            <filelist dir="_schematron/" files="HumanoidAnimation/HAnim1SpecificationLOA3Illustrated.svrl.txt"/>
+        </concat>
+        <echo message="- - - - - - - - - - - -"/>
+    </target>
+
+    <target name="test.newScene.xslt" depends="prepare-X3dSchematron-stylesheet" description="test case">
+        <xslt basedir="." destdir="." extension=""
+            style="X3dSchematronValidityChecks.xslt"
+               in="newScene.x3d"
+              out="_schematron/newScene.x3d.svrl"/>
+        <xslt basedir="." destdir="." extension=""
+            style="SvrlReportText.xslt"
+               in="_schematron/newScene.x3d.svrl"
+              out="_schematron/newScene.x3d.svrl.txt"/>
+        <echo message="newScene.x3d.svrl.txt result:"/>
+        <echo message="- - - - - - - - - - - -"/>
+        <concat>
+            <filelist dir="_schematron/" files="newScene.x3d.svrl.txt"/>
+        </concat>
+        <echo message="- - - - - - - - - - - -"/>
+    </target>
+
+    <target name="test.oneScene.saxon" depends="prepare-X3dSchematron-stylesheet" description="test case">
+        
+        <!-- HumanoidAnimation/Specifications/KoreanCharacterMotionAnnexC01Jin.x3d KoreanCharacterMotionAnnexD01Jin.x3d --><!-- Characters Legacy -->
+        <!-- X3dForAdvancedModeling/GeometricShapes/Catenary.x3d -->
+        <!-- basic/development/TestProtoDeclareDisconnectedField.x3d -->
+        <property name="oneScene.dir" value="${examples.dir}/basic/development"/>
+        <property name="oneScene.name" value="TestProtoDeclareDisconnectedField"/><!-- no .x3d -->
+        
+        <!-- http://www.saxonica.com/documentation/using-xsl/commandline.html                           -->
+        
+        <echo message="check well-formedness of original model..."/>
+        <xmlvalidate file="${oneScene.dir}/${oneScene.name}.x3d" failonerror="false" warn="true" lenient="true"/>
+        <echo message="check DTD validation  of original model..."/>
+        <xmlvalidate file="${oneScene.dir}/${oneScene.name}.x3d" failonerror="false" warn="true">
+            <xmlcatalog refid="X3dCatalog"/>
+        </xmlvalidate>
+        <echo message="check schema validation of original model..."/>
+        <schemavalidate file="${oneScene.dir}/${oneScene.name}.x3d" failonerror="false" fullchecking="false" lenient="false" warn="true">
+            <xmlcatalog refid="X3dCatalog"/>
+        </schemavalidate>
+        <echo message="check schematron validation of original model..."/>
+        <mkdir dir="_schematron"/>
+        <echo>${oneScene.dir}/${oneScene.name}.x3d validation using X3D Schematron rules</echo>
+        <java classname="net.sf.saxon.Transform" classpath="${saxon.dir}/${saxon.jar};." fork="false">
+            <arg value="-warnings:recover"/>
+            <!-- <arg value="-t"/> saxon version and timing information -->
+            <!--arg value="-xsltversion:2.0"/ not supported in SaxonHE? -->
+            <!-- https://stackoverflow.com/questions/45595852/xtde0160-xslt-1-0-compatibility-mode-is-not-available-in-this-configuration-in -->
+            <arg value="-s:${oneScene.dir}/${oneScene.name}.x3d"/>
+            <arg value="-o:${oneScene.dir}/_schematron/${oneScene.name}.svrl"/>
+            <arg value="-xsl:X3dSchematronValidityChecks.xslt"/>
+        </java>
+        <!-- diagnostic 
+        <echo message="${oneScene.dir}/_schematron/${oneScene.name}.svrl result:"/>
+        <echo message="- - - - - - - - - - - -"/>
+        <concat>
+            <filelist dir="${oneScene.dir}/_schematron/" files="${oneScene.name}.svrl"/>
+        </concat>
+        <echo message="- - - - - - - - - - - -"/>
+        -->
+        <java classname="net.sf.saxon.Transform" classpath="${saxon.dir}/${saxon.jar};." fork="${fork}">
+            <arg value="-warnings:recover"/> <!-- recover after writing a warning message -->
+            <!-- <arg value="-t"/> saxon version and timing information -->
+            <!--arg value="-xsltversion:2.0"/ not supported in SaxonHE? -->
+            <!-- https://stackoverflow.com/questions/45595852/xtde0160-xslt-1-0-compatibility-mode-is-not-available-in-this-configuration-in -->
+            <arg value="-s:${oneScene.dir}/_schematron/${oneScene.name}.svrl"/>
+            <arg value="-o:${oneScene.dir}/_schematron/${oneScene.name}.svrl.txt"/>
+            <arg value="-xsl:SvrlReportText.xslt"/> <!--  regular stylesheet -->
+        </java>
+        <echo message="${oneScene.name}.svrl.txt result:"/>
+        <echo message="- - - - - - - - - - - -"/>
+        <concat>
+            <filelist dir="${oneScene.dir}/_schematron/" files="${oneScene.name}.svrl.txt"/>
+        </concat>
+        <echo message="- - - - - - - - - - - -"/>
+        <echo>X3dTidy.xslt conversion to ${oneScene.dir}/${oneScene.name}Tidy.x3d follows...</echo>
+        <!-- Ant xslt task:  http://ant.apache.org/manual/Tasks/style.html -->
+        <xslt style="${stylesheets.dir}/X3dTidy.xslt" classpath="${saxon.dir}/${saxon.jar};."
+                 in="${oneScene.dir}/${oneScene.name}.x3d"
+                out="${oneScene.dir}/${oneScene.name}Tidy.x3d" >
+            <factory name="net.sf.saxon.TransformerFactoryImpl"/>
+            <param name="title"                       expression="${oneScene.name}.x3d"/>
+            <param name="conversionRequired"          expression="true"/>
+            <param name="fixMFStringQuotes"           expression="true"/>
+            <param name="fixUrlAdditionHttpAddresses" expression="true"/>
+            <param name="modifyX3dVersion"            expression="false"/>
+            <param name="revisedX3dVersion"           expression=""/>
+            <param name="appendMissingMetaLicense"    expression="true"/>
+            <param name="licenseLink"                 expression="../../license.html"/>
+            <!--<param name="defaultUrlAddress"           expression="http://X3dGraphics.com/examples/X3dForWebAuthors"/> -->
+        </xslt>
+        <echo message="expected file output: ${oneScene.dir}/${oneScene.name}Tidy.x3d"/>
+        <echo message="check well-formedness of X3dTidy form"/>
+        <xmlvalidate file="${oneScene.dir}/${oneScene.name}Tidy.x3d" failonerror="false" warn="true" lenient="true"/>
+        <echo message="check DTD validation  of X3dTidy form"/>
+        <xmlvalidate file="${oneScene.dir}/${oneScene.name}Tidy.x3d" failonerror="false" warn="true">
+            <xmlcatalog refid="X3dCatalog"/>
+        </xmlvalidate>
+        <echo message="check schema validation of X3dTidy form"/>
+        <schemavalidate file="${oneScene.dir}/${oneScene.name}Tidy.x3d" failonerror="false" fullchecking="false" lenient="false" warn="true">
+            <xmlcatalog refid="X3dCatalog"/>
+        </schemavalidate>
+        <echo message="now canonicalize X3dTidy output:"/>
+        <java classname="org.web3d.x3d.tools.x3db.X3dCanonicalizer"
+              classpath="${c14n.dir}/${c14n.jar}"
+                   fork="${fork}"
+            failonerror="false">
+            <arg value="${oneScene.dir}/${oneScene.name}Tidy.x3d"/>
+            <arg value="${oneScene.dir}/${oneScene.name}TidyCanonical.xml"/>
+        </java>
+        <echo message="check well-formedness of X3dTidy canonicalized form"/>
+        <xmlvalidate file="${oneScene.dir}/${oneScene.name}TidyCanonical.xml" failonerror="false" warn="true" lenient="true"/>
+        <echo message="check DTD validation  of X3dTidy canonicalized form"/>
+        <xmlvalidate file="${oneScene.dir}/${oneScene.name}TidyCanonical.xml" failonerror="false" warn="true">
+            <xmlcatalog refid="X3dCatalog"/>
+            <!-- TODO get xmlcatalog working under jenkins
+            <attribute name="http://xml.org/sax/features/validation" value="true"/>
+            <attribute name="http://xml.org/sax/features/namespaces" value="true"/>
+            -->
+        </xmlvalidate>
+        <echo message="check schema validation of X3dTidy canonicalizedform"/>
+        <schemavalidate file="${oneScene.dir}/${oneScene.name}TidyCanonical.xml" failonerror="false" fullchecking="false" lenient="false" warn="true">
+            <xmlcatalog refid="X3dCatalog"/>
+        </schemavalidate>
+        <echo>${oneScene.dir}/${oneScene.name}TidyCanonical.xml validation using X3D Schematron rules</echo>
+        <java classname="net.sf.saxon.Transform" classpath="${saxon.dir}/${saxon.jar};." fork="false">
+            <arg value="-warnings:recover"/>
+            <!-- <arg value="-t"/> saxon version and timing information -->
+            <!--arg value="-xsltversion:2.0"/ not supported in SaxonHE? -->
+            <!-- https://stackoverflow.com/questions/45595852/xtde0160-xslt-1-0-compatibility-mode-is-not-available-in-this-configuration-in -->
+            <arg value="-s:${oneScene.dir}/${oneScene.name}TidyCanonical.xml"/>
+            <arg value="-o:${oneScene.dir}/_schematron/${oneScene.name}TidyCanonical.svrl"/>
+            <arg value="-xsl:X3dSchematronValidityChecks.xslt"/>
+        </java>
+        <!-- diagnostic 
+        <echo message="${oneScene.dir}/_schematron/${oneScene.name}.svrl result:"/>
+        <echo message="- - - - - - - - - - - -"/>
+        <concat>
+            <filelist dir="${oneScene.dir}/_schematron/" files="${oneScene.name}.svrl"/>
+        </concat>
+        <echo message="- - - - - - - - - - - -"/>
+        -->
+        <java classname="net.sf.saxon.Transform" classpath="${saxon.dir}/${saxon.jar};." fork="${fork}">
+            <arg value="-warnings:recover"/> <!-- recover after writing a warning message -->
+            <!-- <arg value="-t"/> saxon version and timing information -->
+            <!--arg value="-xsltversion:2.0"/ not supported in SaxonHE? -->
+            <!-- https://stackoverflow.com/questions/45595852/xtde0160-xslt-1-0-compatibility-mode-is-not-available-in-this-configuration-in -->
+            <arg value="-s:${oneScene.dir}/_schematron/${oneScene.name}TidyCanonical.svrl"/>
+            <arg value="-o:${oneScene.dir}/_schematron/${oneScene.name}TidyCanonical.svrl.txt"/>
+            <arg value="-xsl:SvrlReportText.xslt"/> <!--  regular stylesheet -->
+        </java>
+        <echo message="${oneScene.name}TidyCanonical.svrl.txt result:"/>
+        <echo message="- - - - - - - - - - - -"/>
+        <concat>
+            <filelist dir="${oneScene.dir}/_schematron/" files="${oneScene.name}TidyCanonical.svrl.txt"/>
+        </concat>
+        <echo message="- - - - - - - - - - - -"/>
+        <delete file="${oneScene.dir}/${oneScene.name}TidyCanonical.xml" verbose="true"/>
+        <!-- optional test step simplifies diff comparison in version control, but be careful not to lose information from original! -->
+        <echo message="overwrite original, without separate canonicalization:"/>
+        <move file="${oneScene.dir}/${oneScene.name}Tidy.x3d" tofile="${oneScene.dir}/${oneScene.name}.x3d" overwrite="true" failonerror="false" verbose="true" preservelastmodified="true"/>
+    </target>
+
+    <target name="test.CutPlane" depends="prepare-X3dSchematron-stylesheet" description="test case">
+        <xslt basedir="." destdir="." extension=""
+            style="X3dSchematronValidityChecks.xslt"
+               in="C:\x3d-code\www.web3d.org\x3d\content\examples\Vrml2.0Sourcebook\Siggraph98Course\CutPlane.x3d"
+              out="_schematron/CutPlane.x3d.svrl"/>
+        <xslt basedir="." destdir="." extension=""
+            style="SvrlReportText.xslt"
+               in="_schematron/CutPlane.x3d.svrl"
+              out="_schematron/CutPlane.x3d.svrl.txt"/>
+        <echo message="CutPlane.x3d.svrl.txt result:"/>
+        <echo message="- - - - - - - - - - - -"/>
+        <concat>
+            <filelist dir="_schematron/" files="CutPlane.x3d.svrl.txt"/>
+        </concat>
+        <echo message="- - - - - - - - - - - -"/>
+    </target>
+
+    <target name="test.HelloWorldMixedCase" depends="prepare-X3dSchematron-stylesheet" description="test case">
+        <!--
+        <xslt basedir="." destdir="." extension=""
+            style="X3dSchematronValidityChecks.xslt"
+               in="HelloWorldMixedCase.x3d"
+              out="_schematron/CutPlane.x3d.svrl"/>
+        <xslt basedir="." destdir="." extension=""
+            style="SvrlReportText.xslt"
+               in="_schematron/CutPlane.x3d.svrl"
+              out="_schematron/CutPlane.x3d.svrl.txt"/>
+        -->
+        <java classname="net.sf.saxon.Transform" classpath="${saxon.dir}/${saxon.jar};." fork="${fork}">
+            <arg value="-warnings:recover"/> <!-- recover after writing a warning message -->
+            <arg value="-s:HelloWorldMixedCase.x3d"/>
+            <arg value="-o:_schematron/HelloWorldMixedCase.x3d.svrl"/>
+            <arg value="-xsl:X3dSchematronValidityChecks.xslt"/> <!--  regular stylesheet -->
+        </java>
+        <java classname="net.sf.saxon.Transform" classpath="${saxon.dir}/${saxon.jar};." fork="${fork}">
+            <arg value="-warnings:recover"/> <!-- recover after writing a warning message -->
+            <arg value="-s:_schematron/HelloWorldMixedCase.x3d.svrl"/>
+            <arg value="-o:_schematron/HelloWorldMixedCase.x3d.svrl.txt"/>
+            <arg value="-xsl:SvrlReportText.xslt"/> <!--  regular stylesheet -->
+        </java>
+        <echo message="HelloWorldMixedCase.x3d.svrl.txt result:"/>
+        <echo message="- - - - - - - - - - - -"/>
+        <concat>
+            <filelist dir="_schematron/" files="HelloWorldMixedCase.x3d.svrl.txt"/>
+        </concat>
+        <echo message="- - - - - - - - - - - -"/>
+    </target>
+
+    <target name="validateX3dSchematronRules" description="ensure rule base is OK">
+        <echo message="well-formed Schematron rules:"/>
+        <xmlvalidate file="X3dSchematronValidityChecks.sch" failonerror="false" warn="true" lenient="yes">
+            <xmlcatalog refid="SchematronCatalog"/>
+        </xmlvalidate>
+        <!-- note that both forms of jing invocation are applied here -->
+        <echo message="XML Schematron rules validation using RelaxNG via Java jing.."/>
+        <!-- fork="true" necessary to avoid problem with hudson:
+        [java] java.lang.IllegalAccessException: Class org.apache.tools.ant.taskdefs.ExecuteJava can not access a member of
+        class com.thaiopensource.relaxng.util.Driver with modifiers "public static" -->
+        <java classname="com.thaiopensource.relaxng.util.Driver" classpath="${jing.dir}/jing.jar;." fork="true">
+            <arg value="-c"/>   <!-- compact form RelaxNG -->
+            <arg value="iso-schematron/iso-schematron.rnc"/>
+            <arg value="X3dSchematronValidityChecks.sch"/>
+        </java>
+        <echo message="XML Schematron rules validation using RelaxNG via jing task.."/>
+        <jing rngfile="iso-schematron/iso-schematron.rnc" file="X3dSchematronValidityChecks.sch" compactsyntax="true"/>
+        <!-- no DTD or XML Schema validation exists for RelaxNG files -->
+        <echo message=".. validateX3dSchematronRules complete"/>
+    </target>
+
+    <target name="TestSchematronDiagnostics.validate" depends="prepare-X3dSchematron-stylesheet" description="primary test case">
+        <echo message="XML well-formed check:"/>
+        <xmlvalidate file="TestSchematronDiagnostics.x3d" lenient="true" failonerror="false">
+            <xmlcatalog refid="X3dCatalog"/>
+        </xmlvalidate>
+        <echo message="XML DTD validation:"/>
+        <xmlvalidate file="TestSchematronDiagnostics.x3d" lenient="false" failonerror="false">
+            <xmlcatalog refid="X3dCatalog"/>
+        </xmlvalidate>
+        <echo message="XML Schema validation:"/>
+        <schemavalidate file="TestSchematronDiagnostics.x3d" lenient="false" failonerror="false" fullchecking="true">
+            <xmlcatalog refid="X3dCatalog"/>
+        </schemavalidate>
+    </target>
+
+    <target name="TestSchematronDiagnostics.rules" depends="prepare-X3dSchematron-stylesheet" description="primary test case">
+        <echo message="XML Schematron rules validation of TestSchematronDiagnostics.x3d:"/>
+        <xslt basedir="." destdir="." extension=""
+            style="X3dSchematronValidityChecks.xslt" 
+               in="TestSchematronDiagnostics.x3d"
+              out="_schematron/TestSchematronDiagnostics.x3d.svrl">
+            <xmlcatalog refid="X3dCatalog"/>
+        </xslt>
+        <echo message="TestSchematronDiagnostics.x3d.svrl validation.."/>
+        <jing rngfile="iso-schematron/svrl.rnc" file="_schematron/TestSchematronDiagnostics.x3d.svrl" compactsyntax="true"/>
+        <xslt basedir="." destdir="." extension=""
+            style="SvrlReportText.xslt"
+               in="_schematron/TestSchematronDiagnostics.x3d.svrl"
+              out="_schematron/TestSchematronDiagnostics.x3d.svrl.txt">
+            <xmlcatalog refid="X3dCatalog"/>
+        </xslt>
+        <echo message="TestSchematronDiagnostics.x3d.svrl.txt result:"/>
+        <echo message="- - - - - - - - - - - -"/>
+        <concat>
+            <filelist dir="_schematron/" files="TestSchematronDiagnostics.x3d.svrl.txt"/>
+        </concat>
+        <echo message="- - - - - - - - - - - -"/>
+        <copy todir="_schematron/" verbose="false">
+            <filelist dir=""             files="TestSchematronDiagnostics.x3d"/>
+            <filelist dir="_schematron/" files="TestSchematronDiagnostics.x3d.svrl"/>
+            <filelist dir="_schematron/" files="TestSchematronDiagnostics.x3d.svrl.txt"/>
+        </copy>
+        <!-- TODO tools/schematron/_schematron//TestSchematronDiagnostics.validation.txt copied manually -->
+    </target>
+
+    <target name="TestSchematronDiagnostics.rules.saxon" depends="" description="primary test case">
+        <echo message="XML Schematron rules validation of TestSchematronDiagnostics.x3d:"/>
+        <java classname="net.sf.saxon.Transform" classpath="${saxon.dir}/${saxon.jar};." fork="false">
+            <arg value="-warnings:recover"/>
+            <!-- <arg value="-t"/> saxon version and timing information -->
+            <!-- <arg value="-T"/> trace -->
+            <arg value="-s:TestSchematronDiagnostics.x3d"/>
+            <arg value="-o:_schematron/TestSchematronDiagnostics.x3d.svrl"/>
+            <arg value="-xsl:X3dSchematronValidityChecks.xslt"/>
+        </java>
+        <java classname="net.sf.saxon.Transform" classpath="${saxon.dir}/${saxon.jar};." fork="false">
+            <arg value="-warnings:recover"/>
+            <!-- <arg value="-t"/> saxon version and timing information -->
+            <arg value="-s:_schematron/TestSchematronDiagnostics.x3d.svrl"/>
+            <arg value="-o:_schematron/TestSchematronDiagnostics.x3d.svrl.txt"/>
+            <arg value="-xsl:SvrlReportText.xslt"/>
+        </java>
+        <echo message="TestSchematronDiagnostics.x3d.svrl.txt result:"/>
+        <echo message="- - - - - - - - - - - -"/>
+        <concat>
+            <filelist dir="_schematron/" files="TestSchematronDiagnostics.x3d.svrl.txt"/>
+        </concat>
+        <echo message="- - - - - - - - - - - -"/>
+        <copy todir="_schematron/" verbose="true" failonerror="false">
+            <filelist dir=""             files="TestSchematronDiagnostics.x3d"/>
+            <filelist dir="_schematron/" files="TestSchematronDiagnostics.x3d.svrl"/>
+            <filelist dir="_schematron/" files="TestSchematronDiagnostics.x3d.svrl.txt"/>
+        </copy>
+    </target>
+
+    <target name="prepare-X3dSchematron-stylesheet" depends="" description="convert schematron rules into schematron stylesheet">
+        <!--
+         http://www.schematron.com
+            basic schematron-to-xslt preprocessing now looks like this:
+            xslt -stylesheet iso_dsdl_include.xsl     theSchema.sch  > theSchema1.sch
+            xslt -stylesheet iso_abstract_expand.xsl  theSchema1.sch > theSchema2.sch
+            xslt -stylesheet iso_svrl_for_xslt2.xsl   theSchema2.sch > theSchema.xslt
+            then application of compiled stylesheet looks like this:
+            xslt -stylesheet theSchema.xslt           myDocument.xml > myResult.svrl
+        -->
+		<echo message="==================================================================="/>
+		<antcall target="validateX3dSchematronRules"/>
+		<!--
+        <xslt basedir="." destdir="." extension=""
+           style="iso_dsdl_include.xsl"
+              in="X3dSchematronValidityChecks.sch"
+             out="X3dSchematronValidityChecks1.sch">
+            <classpath>
+                <pathelement location="${saxon.dir}/${saxon.jar}"/>
+            </classpath>
+        </xslt>
+        -->
+        <java classname="net.sf.saxon.Transform" classpath="${saxon.dir}/${saxon.jar};." fork="${fork}" failonerror="true">
+            <arg value="-warnings:recover"/> <!-- recover after writing a warning message -->
+            <!-- <arg value="-t"/> saxon version and timing information -->
+			<!--arg value="-xsltversion:2.0"/ not supported in SaxonHE? -->
+			<!-- https://stackoverflow.com/questions/45595852/xtde0160-xslt-1-0-compatibility-mode-is-not-available-in-this-configuration-in -->
+            <arg value="-s:X3dSchematronValidityChecks.sch"/>
+            <arg value="-o:X3dSchematronValidityChecks1.sch"/>
+			<arg value="iso_abstract_expand.xsl"/><!-- regular stylesheet -->
+        </java>
+        <echo message="created X3dSchematronValidityChecks1.sch"/>
+		<!--
+        <xslt basedir="." destdir="." extension=""
+           style="iso_abstract_expand.xsl"
+              in="X3dSchematronValidityChecks1.sch"
+                out="X3dSchematronValidityChecks2.sch">
+            <classpath>
+                <pathelement location="${saxon.dir}/${saxon.jar}"/>
+            </classpath>
+        </xslt>
+		-->
+        <java classname="net.sf.saxon.Transform" classpath="${saxon.dir}/${saxon.jar};." fork="${fork}">
+            <arg value="-warnings:recover"/> <!-- recover after writing a warning message -->
+            <!-- <arg value="-t"/> saxon version and timing information -->
+			<!--arg value="-xsltversion:2.0"/ not supported in SaxonHE? -->
+			<!-- https://stackoverflow.com/questions/45595852/xtde0160-xslt-1-0-compatibility-mode-is-not-available-in-this-configuration-in -->
+            <arg value="-s:X3dSchematronValidityChecks1.sch"/>
+            <arg value="-o:X3dSchematronValidityChecks2.sch"/>
+			<arg value="iso_abstract_expand.xsl"/><!-- regular stylesheet -->
+        </java>
+        <echo message="created X3dSchematronValidityChecks2.sch"/>
+		<!--
+        <xslt basedir="." destdir="." extension=""
+           style="iso_svrl.xsl"
+              in="X3dSchematronValidityChecks2.sch"
+             out="X3dSchematronValidityChecks.xslt">
+            <classpath>
+                <pathelement location="${saxon.dir}/${saxon.jar}"/>
+            </classpath>
+        </xslt>
+		-->
+        <java classname="net.sf.saxon.Transform" classpath="${saxon.dir}/${saxon.jar};." fork="${fork}">
+            <arg value="-warnings:recover"/> <!-- recover after writing a warning message -->
+            <!-- <arg value="-t"/> saxon version and timing information -->
+			<!--arg value="-xsltversion:2.0"/ not supported in SaxonHE? -->
+			<!-- https://stackoverflow.com/questions/45595852/xtde0160-xslt-1-0-compatibility-mode-is-not-available-in-this-configuration-in -->
+            <arg value="-s:X3dSchematronValidityChecks2.sch"/>
+            <arg value="-o:X3dSchematronValidityChecks.xslt"/>
+			<arg value="iso_svrl_for_xslt2.xsl"/><!-- regular stylesheet -->
+        </java>
+		
+		<echo message="converting X3dSchematronValidityChecks.xslt to XSLT version 2.0"/>
+		<!-- avoids saxon9he error XTDE0160: XSLT 1.0 compatibility mode is not available in this configuration -->
+        <replace file="X3dSchematronValidityChecks.xslt" token='version="1.0"&gt;' value='version="2.0"&gt;' summary="true"/>
+        
+		<echo message="created X3dSchematronValidityChecks.xslt"/>
+        <xmlvalidate file="X3dSchematronValidityChecks.xslt" lenient="true"  failonerror="false"/>
+        <mkdir dir="_schematron"/>
+		<echo message="==================================================================="/>
+    </target>
+
+    <target name="get-all" depends="get-validation-schemas-DTDs,get-stylesheets,get-test-scenes" description="download all local copies for improved performance using XML catalog">
+    </target>
+
+    <target name="get-validation-schemas-DTDs" description="download local copies for improved performance using XML catalog">
+        <mkdir dir="specifications"/>
+        <get src="http://www.web3d.org/specifications/x3d.all.validation.zip" dest="."/>
+        <unzip   src="x3d.all.validation.zip" dest="specifications/"/>
+        <delete file="x3d.all.validation.zip"/>
+    </target>
+
+    <!-- TODO delete when moved to c14n
+         TODO this needs to be invoked as part of full build
+    <target name="get-move-X3dDoctypeChecker">
+        <mkdir dir="org/web3d/x3d/tools"/>
+        <get src="${x3d.sourceforge.site}/x3d/tools/X3dDoctypeChecker.java"
+                                                                              dest="X3dDoctypeChecker.java"/>
+        -netbeans insists on separate source and build trees-
+        <move file="X3dDoctypeChecker.java" todir="../../tools"/>
+    </target>
+ -->
+    <target name="get-stylesheets">
+        <mkdir dir="_archive"/>
+        <copy toDir="_archive">
+            <fileset dir="." includes="iso*.xsl"/>
+        </copy>
+        <get src="${x3d.sourceforge.site}/x3d/stylesheets/X3dToVrml97.xslt" dest="X3dToVrml97.xslt"/>
+        <get src="${x3d.sourceforge.site}/x3d/stylesheets/X3dToX3dvClassicVrmlEncoding.xslt" dest="X3dToX3dvClassicVrmlEncoding.xslt"/>
+        <!-- checked into version control
+        <get src="http://www.schematron.com/tmp/iso_dsdl_include.xsl"
+                                          dest="iso_dsdl_include.xsl"/>
+        <get src="http://www.schematron.com/tmp/iso_abstract_expand.xsl"
+                                          dest="iso_abstract_expand.xsl"/>
+        <get src="http://www.schematron.com/tmp/iso_svrl_for_xslt2.xsl"
+                                          dest="iso_svrl_for_xslt2.xsl"/>
+        <get src="http://www.schematron.com/tmp/iso_schematron_skeleton_for_saxon.xsl"
+                                          dest="iso_schematron_skeleton_for_saxon.xsl"/>
+        <get src="http://www.schematron.com/tmp/iso_schematron_skeleton_for_xslt1.xsl"
+                                          dest="iso_schematron_skeleton_for_xslt1.xsl"/>
+        -->
+        <!-- TODO get .xsd schemas for .sch and .svrl -->
+    </target>
+
+    <target name="get-test-scenes" description="Retrieve test files, which are also maintained locally in subversion so that any test changes are noticed">
+        <mkdir dir="_archive"/>
+        <copy toDir="_archive">
+            <fileset dir="." includes="iso*.xsl"/>
+        </copy>
+        <get src="${x3d.sourceforge.site}/x3d/content/examples/HelloWorld.x3d"
+                                                                                         dest="HelloWorld.x3d"/>
+        <get src="${x3d.sourceforge.site}/x3d/content/examples/newScene.x3d"
+                                                                                         dest="newScene.x3d"/>
+        <get src="${x3d.sourceforge.site}/x3d/content/examples/HumanoidAnimation/Specifications/HAnim1SpecificationLOA3Illustrated.x3d"
+                                                                                          dest="HAnim1SpecificationLOA3Illustrated.x3d"/>
+        <get src="${x3d.sourceforge.site}/x3d/content/examples/Basic/development/TestSchematronDiagnostics.x3d"
+                                                                                         dest="TestSchematronDiagnostics.x3d"/>
+    </target>
+
+    <!-- ============================================================================== -->
+
+    <!-- SFTP ssh taskdef. this requires maverick-ant; the lib for this is included -->
+    <!-- in the AUV Workbench build and typically found in                          -->
+    <!-- C:\auv\AuvWorkbench\lib\apache-ant-1.7.1\maverick1.2\                      -->
+    <!-- This is downloadable from http://www.sshtools.com/showMaverickAntTask.do 
+
+    <property name="path.maverick.jar" value="${env.ANT_HOME}/maverick1.2/lib/maverick-ant.jar"/>
+    <taskdef name="ssh" classname="com.sshtools.ant.Ssh" classpath="${path.maverick.jar}"/>  -->
+
+    <!-- Maverick ssh/sftp ant task provided at http://www.sshtools.com/showMaverickAntTask.do -->
+    <!-- don't need remotedir="HOME" since that is default landing location on savage.moves.nps.navy.mil sftp server -->
+    <!-- recursing via includes="**/*.*" doesn't preserve directory structure on client side, likely due to sftp limitation  -->
+    <!-- thus must use .zip, .tar.gz (.tgz) to preserve archive structure  -->
+
+    <target name="scp.askUsernamePassword.web3d"
+        description="If needed, ask for username, password">
+        <if>
+            <not>
+                <and>
+                    <isset property="username.web3d"/>
+                    <isset property="password.web3d"/>
+                </and>
+            </not>
+            <then>
+                <echo message="username.web3d, password.web3d not obtained via file ${access.properties.filename}"/>
+                <input message="username.web3d:" addproperty="username.web3d"/>
+                <input message="password.web3d:" addproperty="password.web3d"/>
+                <echo message="username.web3d=${username.web3d}"/>
+                <echo message="password.web3d=################"/>
+                <!--<echo  message="password.web3d=${password.web3d}"/> debug -->
+            </then>
+            <else>
+                <echo message="username.web3d, password.web3d obtained from file ${access.properties.filename}"/>
+            </else>
+        </if>
+    </target>
+
+    <property name="VERBOSE" value="true"/>
+
+    <target name="upload" depends="scp.askUsernamePassword.web3d" description="sftp upload of updated X3D Schematron files">
+        <echo message="sftp upload to ${username.web3d}@sftp://${sftpServer.web3d}${sftpDirectory.web3d.examples}/../../tools/schematron"/>
+        <scp remotetodir="${username.web3d}@${sftpServer.web3d}:${sftpDirectory.web3d.examples}/../../tools/schematron" password="${password.web3d}" verbose="${VERBOSE}">
+            <!-- top level -->
+            <fileset dir="../../tools/schematron">
+                <include name="X3dSchematron.html"/>
+                <include name="build.xml"/>
+                <include name="buildSchematronDevelopment.xml"/>
+                <include name="X3dSchematronValidityChecks.*"/>
+                <include name="X3dSchematronDataFlow.*"/>
+                <include name="SvrlReportText.*"/>
+                <include name="iso_*/xsl"/>
+                <include name="_schematron/*"/>
+            </fileset>
+        </scp>
+        <echo message="buildSchematronDevelopment.xml upload task complete"/>
+    </target>
+
+</project>

@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright (c) 1995-2017 held by the author(s).  All rights reserved.
+                          
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer
+      in the documentation and/or other materials provided with the
+      distribution.
+    * Neither the names of the Naval Postgraduate School (NPS)
+      Modeling Virtual Environments and Simulation (MOVES) Institute
+      (http://www.nps.edu and http://www.MovesInstitute.org)
+      nor the names of its contributors may be used to endorse or
+      promote products derived from this software without specific
+      prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<!--
+    Document   : build.xml
+    Created on : 19 October 2008
+    Author     : Don Brutzman
+    Description: build configuration for X3D schematron validation testing
+-->
+
+<project name="X3D tools: schematron" default="all" basedir=".">
+    <description>Quality assurance rules for X3D correctness, completeness and coherency using XML Schematron</description>
+
+    <!-- local copies put in local subdirectory by get-validation-schemas-DTDs task -->
+    <xmlcatalog id="X3dCatalog">
+        <dtd    publicId="ISO//Web3D//DTD X3D 3.0//EN"                                  location="specifications/x3d-3.0.dtd"/>
+        <dtd    publicId="ISO//Web3D//DTD X3D 3.1//EN"                                  location="specifications/x3d-3.1.dtd"/>
+        <dtd    publicId="ISO//Web3D//DTD X3D 3.2//EN"                                  location="specifications/x3d-3.2.dtd"/>
+        <dtd    publicId="ISO//Web3D//DTD X3D 3.3//EN"                                  location="specifications/x3d-3.3.dtd"/>
+        <dtd    publicId="ISO//Web3D//DTD X3D 4.0//EN"                                  location="specifications/x3d-4.0.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-3.0.dtd"             location="specifications/x3d-3.0.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-3.1.dtd"             location="specifications/x3d-3.1.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-3.2.dtd"             location="specifications/x3d-3.2.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-3.3.dtd"             location="specifications/x3d-3.3.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-4.0.dtd"             location="specifications/x3d-4.0.dtd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-3.0.xsd"             location="specifications/x3d-3.0.xsd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-3.1.xsd"             location="specifications/x3d-3.1.xsd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-3.2.xsd"             location="specifications/x3d-3.2.xsd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-3.3.xsd"             location="specifications/x3d-3.3.xsd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-4.0.xsd"             location="specifications/x3d-4.0.xsd"/>
+    </xmlcatalog>
+
+    <!-- local copies put in local subdirectory by X3D-Edit SchematronValidationAction createTempDirectory() -->
+    <xmlcatalog id="X3dCatalogLocalX3D-Edit">
+        <dtd    publicId="ISO//Web3D//DTD X3D 3.0//EN"                                  location="x3d-3.0.dtd"/>
+        <dtd    publicId="ISO//Web3D//DTD X3D 3.1//EN"                                  location="x3d-3.1.dtd"/>
+        <dtd    publicId="ISO//Web3D//DTD X3D 3.2//EN"                                  location="x3d-3.2.dtd"/>
+        <dtd    publicId="ISO//Web3D//DTD X3D 3.3//EN"                                  location="x3d-3.3.dtd"/>
+        <dtd    publicId="ISO//Web3D//DTD X3D 4.0//EN"                                  location="x3d-4.0.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-3.0.dtd"             location="x3d-3.0.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-3.1.dtd"             location="x3d-3.1.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-3.2.dtd"             location="x3d-3.2.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-3.3.dtd"             location="x3d-3.3.dtd"/>
+        <dtd    publicId="https://www.web3d.org/specifications/x3d-4.0.dtd"             location="x3d-4.0.dtd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-3.0.xsd"             location="x3d-3.0.xsd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-3.1.xsd"             location="x3d-3.1.xsd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-3.2.xsd"             location="x3d-3.2.xsd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-3.3.xsd"             location="x3d-3.3.xsd"/>
+        <entity publicId="https://www.web3d.org/specifications/x3d-4.0.xsd"             location="x3d-4.0.xsd"/>
+    </xmlcatalog>
+
+        <!-- test properties overridden externally by X3D-Edit prior to invocation for validateScene* tasks:
+        <property name="sourceFile"                 value="C:/www.web3d.org/x3d/content/examples/Basic/development/AmelaExampleScene.x3d'"/>
+        <property name="schematronStylesheet"       value="X3dSchematronValidityChecks.xslt"/>
+        <property name="svrlReportStylesheet"       value="SvrlReportText.xslt"/>
+        <property name="svrlOutputFile"             value="C:/www.web3d.org/x3d/content/examples/Basic/development/_schematron/AmelaExampleScene.x3d.svrl"/>
+        <property name="svrlReportFile"             value="C:/www.web3d.org/x3d/content/examples/Basic/development/_schematron/AmelaExampleScene.x3d.svrl.txt"/>
+        <property name="X3dToClassicVrmlStylesheet" value="X3dToX3dvClassicVrmlEncoding.xslt"/>
+        <property name="X3dToClassicVrmlOutputFile" value="X3dToX3dvClassicVrmlEncoding.output.txt"/>
+        -->
+
+    <property name="X3dC14n.jar"                value="../canonical/dist/lib/X3dC14n.jar"/>
+
+    <target name="validateSceneAll.test" description="X3D-Edit external task for testing comprehensive validation" >
+        <!-- setup -->
+        <property name="sourceFile" location="../../content/examples/HelloWorld.x3d"/>
+        <!-- alternate test against diagnostics file with intentional errors
+        <property name="sourceFile" location="../../content/examples/Basic/development/TestSchematronDiagnostics.x3d"/> -->
+
+        <!-- schematron stylesheets can be .xslt -->
+        <property name="schematronStylesheet"       value="X3dSchematronValidityChecks.xslt"/>
+        <property name="svrlReportStylesheet"       value="SvrlReportText.xslt"/>
+        <property name="svrlOutputFile"             value="HelloWorld.x3d.svrl"/>
+        <property name="svrlReportFile"             value="HelloWorld.x3d.svrl.txt"/>
+        <property name="X3dToClassicVrmlStylesheet" value="X3dToX3dvClassicVrmlEncoding.xslt"/>
+        <property name="X3dToClassicVrmlOutputFile" value="X3dToX3dvClassicVrmlEncoding.output.x3dv"/>
+        
+        <!-- invoke -->
+        <echo message="Quality assurance checks for ${sourceFile}"/>
+        <antcall target="validateSceneAll"/>
+    </target>
+
+    <target name="validateSceneAll" description="X3D-Edit external task for comprehensive validation"
+            depends="validateSceneWellFormedXML,validateSceneX3dDTD,validateSceneX3dSchema,checkSceneX3dToClassicVrml.xslt,validateSceneX3dSchematron.xslt">
+        <!-- TODO: also integrate this local task as dependency:  ,X3dDoctypeChecker -->
+
+        <!-- diagnostics for overridden properties
+        <echo message="Quality assurance checks for ${sourceFile}"/>
+        <echo message="$sourceFile=${sourceFile}"/>
+        <echo message="$schematronStylesheet=${schematronStylesheet}"/>
+        <echo message="$svrlReportStylesheet=${svrlReportStylesheet}"/>
+        <echo message="$svrlOutputFile=${svrlOutputFile}"/>
+        <echo message="$svrlReportFile=${svrlReportFile}"/>
+        -->
+        
+        <!-- avoid antcall invocation as potential consumer of much memory, use task dependency instead
+        <antcall target="validateSceneWellFormedXML"/>
+        <antcall target="validateSceneX3dDTD"/>
+        <antcall target="validateSceneX3dSchema"/>
+        <antcall target="checkSceneX3dToClassicVrml.xslt"/>
+        -->
+
+        <!-- .xslt must match parameters used by invoking class XmlValidationAction.java
+        <antcall target="validateSceneX3dSchematron.xslt"/>
+        -->
+        <echo message="Quality assurance checks for ${sourceFile} complete."/>
+    </target>
+    
+    <target name="validateSceneWellFormedXML" description="X3D-Edit external task for Well-Formed XML check" >
+        <echo message="XML well-formed check..."/>
+        <xmlvalidate file="${sourceFile}" lenient="true" failonerror="false">
+            <xmlcatalog refid="X3dCatalogLocalX3D-Edit"/>
+        </xmlvalidate>
+    </target>
+    
+    <target name="validateSceneX3dDTD" description="X3D-Edit external task for X3D DTD validation" >
+        <echo message="X3D DTD validation..."/>
+        <xmlvalidate file="${sourceFile}" lenient="false" failonerror="false">
+            <xmlcatalog refid="X3dCatalogLocalX3D-Edit"/>
+        </xmlvalidate>
+    </target>
+    
+    <target name="validateSceneX3dSchema" description="X3D-Edit external task for X3D Schema validation" >
+        <schemavalidate file="${sourceFile}" lenient="false" failonerror="false" fullchecking="true">
+            <xmlcatalog refid="X3dCatalogLocalX3D-Edit"/>
+        </schemavalidate>
+        <echo message="X3D Schema validation complete."/>
+    </target>
+
+    <target name="validateSceneX3dSchematron.xslt" description="X3D-Edit external task for X3D Schematron validation" >
+        <!-- diagnostic 
+        <echo message="$schematronStylesheet=${schematronStylesheet}, $svrlReportStylesheet=${svrlReportStylesheet}, $svrlOutputFile=${svrlOutputFile}"/>
+        -->
+        <!-- regular .xslt stylesheet using Ant task: -->
+        <echo message="X3D Schematron rules validation, regular .xslt stylesheet using Ant task..."/>
+        <xslt basedir="." destdir="." extension=""
+              style="${schematronStylesheet}"
+                 in="${sourceFile}"
+                out="${svrlOutputFile}">
+            <xmlcatalog refid="X3dCatalogLocalX3D-Edit"/>
+        </xslt>
+        <xslt basedir="." destdir="." extension=""
+              style="${svrlReportStylesheet}"
+                 in="${svrlOutputFile}"
+                out="${svrlReportFile}">
+            <xmlcatalog refid="X3dCatalogLocalX3D-Edit"/>
+        </xslt>
+        <!-- TODO add construction of HTML report if desired -->
+        <concat>
+            <filelist dir="." files="${svrlReportFile}"/>
+        </concat>
+        <echo message="X3D Schematron rules validation complete."/>
+    </target>
+
+    <target name="checkSceneX3dToClassicVrml.xslt" description="X3D-Edit external task for X3D Schematron validation" >
+        <echo message="X3dToClassicVrml stylesheet conversion tests..."/>
+        <!-- diagnostic
+        <echo message="X3dToClassicVrmlStylesheet=${X3dToClassicVrmlStylesheet}"/>
+        <echo message="X3dToClassicVrmlOutputFile=${X3dToClassicVrmlOutputFile}"/>
+        -->
+        <xslt basedir="." destdir="." extension=""
+              style="${X3dToClassicVrmlStylesheet}"
+                 in="${sourceFile}"
+                out="${X3dToClassicVrmlOutputFile}">
+            <xmlcatalog refid="X3dCatalogLocalX3D-Edit"/>
+        </xslt>
+        <echo message="X3dToClassicVrml stylesheet conversion tests complete."/>
+    </target>
+
+    <target name="X3dDoctypeChecker" description="X3dDoctypeChecker checks for XML header, DOCTYPE" >
+        <echo message="X3dDoctypeChecker tests for correct XML header, X3D DOCTYPE and version consistency..."/>
+        <java classname="org.web3d.x3d.tools.X3dDoctypeChecker" classpath="${X3dC14n.jar}">
+            <arg value="${sourceFile}"/>
+            <arg value="-verbose"/>
+        </java>
+        <echo message="X3dDoctypeChecker tests complete."/>
+    </target>
+
+    <!-- external rules for development/testing only -->
+
+    <target name="TestSchematronDiagnostics.rules">
+        <ant antfile="buildSchematronDevelopment.xml" target="TestSchematronDiagnostics.rules"/>
+    </target>
+</project>

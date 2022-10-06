@@ -1,0 +1,308 @@
+<!DOCTYPE HTML>
+
+<html>
+    <head>
+        <title>X3D Schematron Validation and Quality Assurance (QA)</title>
+        <meta name="name" content="X3dSchematron.html" />
+        <meta name="creator" content="Don Brutzman" />
+        <meta name="description" content="Description of X3D validation using XML schematron" />
+        <link rel="shortcut icon" href="images/X3DtextIcon16.png" title="X3D">
+        
+        <style type="text/css">
+            ul.box { list-style-type: circle }
+        </style>
+        
+    </head>
+    <body>
+        
+        <!-- =================================================== -->
+        
+        <table border="0" cellspacing="0" cellpadding="0" summary="" align="center">
+            <tr align="center">
+                <td><a href="http://www.web3d.org/x3d/content/examples/X3dResources.html"><img src="images/x3d2-s.gif" width="154" height="97" border="0" title="to X3D Resources page" alt="to X3D Resources page"></a></td>
+                <td><pre>   </pre></td>
+                <td><h1>X3D Schematron Validation and Quality Assurance (QA)</h1></td>
+                <td><pre>   </pre></td>
+                <td><a href="http://www.web3d.org"><img src="images/web3d_logo2.png" width="120" height="60" border="0" title="to Web3D home page" alt="to Web3D home page"></a></td>
+            </tr>
+        </table>
+
+        <h4 align="center">
+            X3D Schematron helps authors by providing quality assurance to ensure intended results in X3D scenes and metadata.
+        </h4>
+
+        <!-- =================================================== -->
+
+        <blockquote>
+            <p align="center"><small>
+                <a href="#Summary">Summary</a> |
+                <a href="#Motivation">Motivation</a> |
+                <a href="#Conversion">Conversion</a> |
+                <a href="#Resources">Resources</a> |
+                <a href="#References">References</a> |
+                <a href="#Contact">Contact</a>
+            </small></p>
+        </blockquote>
+
+        <!-- =================================================== -->
+
+        <h2>
+            <a name="Summary">Summary</a>
+        </h2>
+        
+        <p>
+            X3D Schematron
+            provides an additional form of XML validation for X3D scenes.
+            Authors can use X3D Schematron reports to verify semantic correctness and detect internal-consistency problems.
+        </p>
+        <p>
+            X3D&nbsp;Schematron validation rules have greater expressive power than DOCTYPE and Schema constraints, and are
+            most effective when applied following initial DOCTYPE and Schema validation.
+        </p>
+        
+        <!--  -->
+        
+        <!-- =================================================== -->
+
+        <h2>
+            <a name="Motivation">Motivation</a>
+        </h2>
+        
+        <p>
+            Schematron is a language for making assertions about patterns and internal consistency found in XML documents.
+            If assertions for correct behavior fail, then error and warning messages are provided.
+        </p>
+        
+        <p>
+            Reporting detected inconsistencies and error conditions enables authors to correct
+            <a href="http://www.web3D.org/x3d">Extensible 3D (X3D) Graphics</a> 
+            scene problems.
+            Quality assurance to improve correctness can work on many levels, both syntactic and semantic.
+        </p>
+        
+        <p>
+            The
+            Extensible Markup Language (XML)
+            encoding for .x3d scenes
+            has offered three primary ways for checking the syntactic correctness of scenes:
+        </p>
+        
+        <ul>
+            <li>
+                <a href="http://www.w3.org/TR/xml/#sec-well-formed">XML well-formed checks</a>
+            </li>
+            <li>
+                <a href="http://www.w3.org/TR/xml/#sec-prolog-dtd">X3D document type definition (DTD or DOCTYPE)</a>
+                validation grammar ensures proper parent-child element relations and attribute naming
+            </li>
+            <li>
+                <a href="http://www.w3.org/XML/Schema">X3D Schema</a>
+                validation grammar also ensures proper type-checking of most attribute values
+            </li>
+        </ul>
+        
+        <p>
+            An X3D Schematron ruleset is now available as a fourth approach to
+            allow checking a wide variety requirements that are specific to X3D.
+            These quality-assurance checks go beyond the capabilities of DTD or XML Schema grammar-based checking.
+            Rule examples include:
+        </p>
+            
+            <ul>
+                <li>DEF must precede USE</li>
+                <li>Interpolator key and keyValue arrays must have the same length</li>
+                <li>Numeric values for index arrays are within bounds</li>
+                <li>Plus many others, since X3D has many requirements for internal consistency</li>
+            </ul>
+        
+        <p>
+            Another relevant description for Schematron:
+        </p>
+        
+        <blockquote>
+            &quot;Schematron is a small language for making assertions about the presence or absence of patterns 
+            in XML documents using XPaths.
+            It is can be categorized as a schema language, a rules language, or a constraint language. 
+            Schematron is design to co-exist and augment with existing schema languages, providing a 
+            convenient way to easily express and test business and structural constraints.&quot;
+            &nbsp;&nbsp;(<a href="http://www.eccnet.com/schematron/index.php/Main_Page" >Schematron Wiki</a>)
+        </blockquote>
+
+        <!-- =================================================== -->
+
+        <h2>
+            <a name="Conversion">Conversion</a>
+        </h2>
+
+        <p>
+            The software setup for the conversion process is a bit involved, but the end result is straightforward.
+            The following diagram shows the relationship between original source Schematron rules, X3D input scenes, and text output reports.
+        </p>
+        <p>
+            <img alt="X3D Schematron dataflow conversion diagram" src="X3dSchematronDataFlow.png"/>
+        </p>
+
+        <!-- =================================================== -->
+
+        <h2>
+            <a name="Resources">Resources</a>
+        </h2>
+        
+        <p>
+            The following resources can be used to provide Schematron support for X3D.
+        </p>
+        <ul>
+            <li>
+                The
+                <a href="https://savage.nps.edu/X3dValidator">X3D Validator</a>
+                helps ensure the correctness of X3D scenes and metadata by providing a server-based suite of
+                <a href="http://www.web3d.org/x3d/content/examples/X3dResources.html#QualityAssurance">quality-assurance (QA) tests</a>.
+                It is a server-based application that includes the X3D&nbsp;Schematron checks.
+            </li>
+            <li>
+                <a href="X3dSchematronValidityChecks.sch">X3D schematron rules</a>
+               (<a href="X3dSchematronValidityChecks.sch">X3dSchematronValidityChecks.sch</a>)
+                and corresponding autogenerated
+                <a href="X3dSchematronValidityChecks.xslt">X3D schematron stylesheet</a>,
+                maintained under
+                <a href="https://sourceforge.net/p/x3d/code/HEAD/tree/www.web3d.org/x3d/tools/schematron">version control</a>
+                with an
+                <a href="https://savage.nps.edu/X3D-Edit/license.html">open-source license</a>
+                (<a href="https://savage.nps.edu/X3D-Edit/license.txt">.txt</a>).
+            </li>
+            <li>
+                A pair of
+                <a href="http://ant.apache.org">Ant</a>
+                build files
+                (<a href="buildSchematronDevelopment.xml">buildSchematronDevelopment.xml</a>
+                 and
+                 <a href="build.xml">build.xml</a>)
+                are used to process and test these rules.
+                Details for this approach are described in
+                <a href="https://github.com/Schematron/schematron/blob/master/trunk/ant-schematron/Using%20Schematron%20for%20Ant.pdf">Using Schematron for Ant by example</a>.
+            </li>
+            <li>
+                Specific outputs for this example include
+                Schematron Validation Report Language (SVRL) intermediate output
+                (<a href="_schematron/TestSchematronDiagnostics.x3d.svrl">.svrl</a>)
+                showing each rule tested,
+                <a href="SvrlReportText.xslt">SvrlReportText.xslt</a>
+                stylesheet that distills .svrl output from XML format into a simple text file, and
+                filtered output
+                (<a href="_schematron/TestSchematronDiagnostics.x3d.svrl.txt">.svrl.txt</a>)
+                for a plain-text summary of results..
+            </li>
+            <li>
+                <a href="https://savage.nps.edu/X3D-Edit">X3D-Edit</a>
+                provides this capability to X3D authors (found under X3D, 
+                <a href="https://savage.nps.edu/X3D-Edit/images/X3dChecksXmlWellFormedDtdSchemaSchematronValidation.png">Quality Assurance</a> 
+                menu).
+            </li>
+            <li>
+                <a href="http://www.web3d.org/x3d/content/examples/Basic/development/TestSchematronDiagnostics.x3d">TestSchematronDiagnostics.x3d</a>
+                (<a href="http://www.web3d.org/x3d/content/examples/Basic/development/TestSchematronDiagnostics.html">.html</a>)
+                is a nonviewable test file with numerous deliberate errors that is used to generate
+                <a href="_schematron/TestSchematronDiagnostics.validation.txt">comprehensive X3D validation results</a>.
+            </li>
+        </ul>
+        
+        <!-- =================================================== -->
+
+        <h2>
+            <a name="References">References</a>
+        </h2>
+        
+        <p>
+            The following references describe Schematron in further detail.
+        </p>
+        
+        <ul>
+            <li>
+                <a href="http://www.schematron.com">Schematron home page</a>
+                includes links to the latest Schematron conversion stylesheets, which can translate a
+                Schematron rule file
+                into an
+                <a href="http://www.w3.org/TR/xslt">Extensible Stylesheet Language for Transformations (XSLT)</a>
+                stylesheet containing
+                <a href="http://www.w3.org/TR/xpath">XML Path Language (XPath)</a>
+                expressions.
+                Since style capabilities using
+                <a href="http://www.w3.org/Style/XSL">XSLT and XPath</a>
+                are widely implemented, this approach makes it easy to port
+                Schematron rules into different applications.
+            </li>
+            <li>
+                <a href="https://github.com/Schematron">Schematron source on github</a>
+				(updated X3D Schematron 22 October 2017)
+            </li>
+            <li>
+                An older
+                <a href="http://xml.ascc.net/resource/schematron/schematron.html">Schematron page</a>:
+				"An XML Structure Validation Language using Patterns in Trees"
+            </li>
+			<!-- no longer active
+            <li>
+                <a href="http://www.eccnet.com/schematron/index.php/Main_Page">Schematron Wiki</a>
+            </li>
+			-->
+            <li>
+                <a href="http://en.wikipedia.org/wiki/Schematron">Wikipedia: Schematron</a>
+            </li>
+            <li>
+                <a href="http://standards.iso.org/ittf/PubliclyAvailableStandards/c040833_ISO_IEC_19757-3_2006(E).zip">Specification ISO/IEC 19757-3:2006</a>:
+                Information technology -- Document Schema Definition Language (DSDL) -- Part 3: Rule-based validation -- Schematron
+            </li>
+            <li>
+                <a href="http://www.thaiopensource.com/relaxng/jing.html">Jing</a>
+               (<a href="https://github.com/relaxng/jing-trang">alternate</a>)
+                RELAX NG validator in Java is used to validate
+                the schematron rules documents
+            </li>
+            <li>
+                <a href="http://oreilly.com/catalog/9780596527716/index.html">Schematron</a>
+                "O&apos;Reilly short cut"
+                by Eric van der Vlist (March 2007)
+                provides an excellent tutorial on how to design and test Schematron rules
+            </li>
+            <li>
+                <a href="http://broadcast.oreilly.com/2008/11/schemas-stereotypes-archetypes.html">Schemas: stereotypes, archetypes or prototypes?</a> by
+                <a href="http://www.oreillynet.com/pub/au/1712">Rick Jelliffe</a>
+            </li>
+            <li>
+                <a href="http://www.xfront.com/Integrated-schema-approach/Use-Multiple-Schema-Languages.html">Best Practice: Use Multiple Schema Languages</a> 
+                by Roger L. Costello
+            </li>
+        </ul>
+
+        <p>
+            Of related interest:
+            <a href="http://www.web3d.org/x3d/content/examples/X3dResources.html#AuthoringSupport">X3D DTDs and Schemas</a>
+            are maintained online and linked via the
+            <a href="http://www.web3d.org/x3d/content/examples/X3dResources.html#AuthoringSupport">X3D Resources</a> page.
+            Example
+            <a href="http://www.web3d.org/x3d/content/examples/X3dSceneAuthoringHints.html#Authoring">X3D DTD and schema usage tips</a>
+            are further documented as part of the
+            <a href="http://www.web3d.org/x3d/content/examples/X3dSceneAuthoringHints.html#Authoring">X3D Scene Authoring Hints</a>.
+        </p>
+        
+        <!-- =================================================== -->
+        
+        <hr />
+        <h3><a name="Contact">Contact</a></h3>
+        
+        <blockquote>
+            Updated:  2 July 2022
+            <br />
+            Maintained by
+            <a href="http://faculty.nps.edu/brutzman">Don&nbsp;Brutzman</a>
+           (<a href="mailto:brutzman%20at%20nps.edu(Don%20Brutzman)?subject=X3D%20Schematron%20Validation%20"><i>brutzman&nbsp;at&nbsp;nps.edu</i></a>).
+            Comments &amp; suggestions are welcome.
+        <blockquote>
+        </blockquote>
+            Revisions are found under
+            <a href="https://sourceforge.net/p/x3d/code/HEAD/tree/www.web3d.org/x3d/tools/schematron">Sourceforge version control</a>
+            and available online at
+            <a href="http://www.web3d.org/x3d/tools/schematron/X3dSchematron.html">http://www.web3d.org/x3d/tools/schematron/X3dSchematron.html</a>
+        </blockquote>
+    </body>
+</html>
